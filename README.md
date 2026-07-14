@@ -1,2 +1,2 @@
 # Voix
-Proyecto Sena
+Este es el proyecto del Sena
