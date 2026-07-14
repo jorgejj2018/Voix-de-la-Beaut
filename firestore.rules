@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && getUserRole() == 'superadmin';
+    }
+
+    function isAdminOrAbove() {
+      return isAuthenticated() && getUserRole() in ['admin', 'superadmin'];
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      // Usuario crea su propio perfil
+      allow create: if isOwner(userId)
+                    && request.resource.data.role in ['lector', 'creador', 'empresa', 'superadmin'];
+      // Empresa crea un colaborador asociado a su companyId
+      allow create: if isAuthenticated()
+                    && getUserRole() == 'empresa'
+                    && request.resource.data.companyId == request.auth.uid
+                    && request.resource.data.role in ['lector', 'creador'];
+      allow update: if (isOwner(userId)
+                        && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
+                    || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    match /articles/{articleId} {
+      // Lectura pública para artículos publicados — sin autenticación requerida
+      allow read: if resource.data.status == 'published';
+      // Lectura completa para autenticados con acceso al recurso
+      allow read: if isAuthenticated() && (
+                       resource.data.authorId == request.auth.uid
+                       || isAdminOrAbove()
+                     );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+                       resource.data.authorId == request.auth.uid
+                       || isAdminOrAbove()
+                     );
+      allow delete: if isAuthenticated() && (
+                       resource.data.authorId == request.auth.uid
+                       || isAdminOrAbove()
+                     );
+    }
+  }
+}
