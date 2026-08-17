@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
-import ErrorMessage from '../ui/ErrorMessage'
+import Toast from '../ui/Toast'
 import GoogleIcon from '../ui/GoogleIcon'
 
 const FIREBASE_ERRORS = {
@@ -21,20 +21,58 @@ export default function LoginForm() {
   const { login, loginWithGoogle } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState({})
-  const [serverError, setServerError] = useState('')
+  const [toast, setToast] = useState(null)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const PASSWORD_RULE = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/
 
   function handleChange(e) {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
+
+    if (name === 'email') {
+      if (value && !EMAIL_REGEX.test(value)) {
+        setErrors((prev) => ({ ...prev, email: 'Formato de correo inválido.' }))
+      } else {
+        setErrors((prev) => ({ ...prev, email: '' }))
+      }
+    }
+
+    if (name === 'password') {
+      if (value && !PASSWORD_RULE.test(value)) {
+        setErrors((prev) => ({
+          ...prev,
+          password: 'La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y un símbolo.',
+        }))
+      } else {
+        setErrors((prev) => ({ ...prev, password: '' }))
+      }
+    }
+
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }))
+    }
   }
 
   function validate() {
     const next = {}
     if (!form.email) next.email = 'El correo es requerido.'
-    if (!form.password) next.password = 'La contraseña es requerida.'
+    else if (!EMAIL_REGEX.test(form.email)) next.email = 'Formato de correo inválido.'
+
+    if (!form.password) {
+      next.password = 'La contraseña es requerida.'
+    } else if (!PASSWORD_RULE.test(form.password)) {
+      next.password = 'La contraseña debe tener al menos 8 caracteres, incluir mayúsculas, minúsculas, números y un símbolo.'
+    }
+
     return next
   }
 
@@ -46,11 +84,10 @@ export default function LoginForm() {
       return
     }
     setLoading(true)
-    setServerError('')
     try {
       await login(form.email, form.password)
     } catch (err) {
-      setServerError(FIREBASE_ERRORS[err.code] ?? 'Ocurrió un error. Intenta de nuevo.')
+      setToast({ type: 'error', message: FIREBASE_ERRORS[err.code] ?? 'Ocurrió un error. Intenta de nuevo.' })
     } finally {
       setLoading(false)
     }
@@ -58,12 +95,11 @@ export default function LoginForm() {
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true)
-    setServerError('')
     try {
       await loginWithGoogle()
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-        setServerError(FIREBASE_ERRORS[err.code] ?? 'Error al iniciar sesión con Google.')
+        setToast({ type: 'error', message: FIREBASE_ERRORS[err.code] ?? 'Error al iniciar sesión con Google.' })
       }
     } finally {
       setGoogleLoading(false)
@@ -74,7 +110,7 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-      <ErrorMessage message={serverError} />
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <button
         type="button"

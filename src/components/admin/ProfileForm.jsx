@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useStorage } from '../../hooks/useStorage'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Textarea from '../ui/Textarea'
 import Avatar from '../ui/Avatar'
-import ErrorMessage from '../ui/ErrorMessage'
+import Toast from '../ui/Toast'
 
 export default function ProfileForm() {
   const { userProfile, updateUserProfile, currentUser } = useAuth()
@@ -17,9 +17,15 @@ export default function ProfileForm() {
   })
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState(userProfile?.photoURL ?? null)
-  const [serverError, setServerError] = useState('')
+  const [toast, setToast] = useState(null)
   const [success, setSuccess] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [toast])
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -38,7 +44,7 @@ export default function ProfileForm() {
     if (!form.displayName.trim()) return
 
     setSaving(true)
-    setServerError('')
+    setToast(null)
     setSuccess(false)
 
     try {
@@ -55,7 +61,7 @@ export default function ProfileForm() {
 
       setSuccess(true)
     } catch {
-      setServerError('Error al actualizar el perfil. Intenta de nuevo.')
+      setToast({ type: 'error', message: 'Error al actualizar el perfil. Intenta de nuevo.' })
     } finally {
       setSaving(false)
     }
@@ -63,7 +69,7 @@ export default function ProfileForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
-      <ErrorMessage message={serverError} />
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       {success && (
         <div className="rounded border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">

@@ -6,7 +6,7 @@ import Spinner from '../../components/ui/Spinner'
 import EmptyState from '../../components/ui/EmptyState'
 import { useUsers } from '../../hooks/useUsers'
 import { useAuth } from '../../context/AuthContext'
-import { updateUserRole, deleteUser } from '../../services/usersService'
+import { updateUserRole, deleteUser, setUserStatus } from '../../services/usersService'
 
 export default function SuperAdminUsersPage() {
   const { currentUser } = useAuth()
@@ -16,6 +16,10 @@ export default function SuperAdminUsersPage() {
 
   async function handleRoleChange(uid, role) {
     await updateUserRole(uid, role)
+  }
+
+  async function handleStatusChange(uid, status) {
+    await setUserStatus(uid, status)
   }
 
   async function handleConfirmDelete() {
@@ -46,6 +50,7 @@ export default function SuperAdminUsersPage() {
           users={users}
           currentUid={currentUser?.uid}
           onRoleChange={handleRoleChange}
+          onStatusChange={handleStatusChange}
           onDelete={setUserToDelete}
         />
       )}

@@ -34,11 +34,21 @@ const NAV_BY_ROLE = {
   ],
 }
 
+const ROLE_HOME = {
+  lector: '/lector',
+  creador: '/lector',
+  author: '/panel',
+  empresa: '/empresa',
+  admin: '/admin',
+  superadmin: '/superadmin',
+}
+
 export default function Sidebar({ role }) {
   const { logout } = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
   const navItems = NAV_BY_ROLE[role] ?? []
+  const homeLink = ROLE_HOME[role] ?? '/'
 
   async function handleLogout() {
     await logout()
@@ -47,7 +57,7 @@ export default function Sidebar({ role }) {
 
   return (
     <aside className="hidden w-56 shrink-0 flex-col bg-[#1A1A1B] px-4 py-6 md:flex">
-      <Link to="/" className="mb-8 font-display text-lg font-bold leading-tight text-white">
+      <Link to={homeLink} className="mb-8 font-display text-lg font-bold leading-tight text-white">
         Voix de la Beauté
       </Link>
 

@@ -8,6 +8,15 @@ const PANEL_LINKS = {
   superadmin: { to: '/superadmin', label: 'Super Admin' },
 }
 
+const ROLE_HOME = {
+  lector: '/lector',
+  creador: '/lector',
+  author: '/panel',
+  empresa: '/empresa',
+  admin: '/admin',
+  superadmin: '/superadmin',
+}
+
 export default function Navbar() {
   const { currentUser, userProfile, logout } = useAuth()
   const navigate = useNavigate()
@@ -18,12 +27,13 @@ export default function Navbar() {
   }
 
   const panelLink = userProfile ? PANEL_LINKS[userProfile.role] : null
+  const homeLink = currentUser && userProfile ? ROLE_HOME[userProfile.role] ?? '/' : '/'
 
   return (
     <header className="sticky top-0 z-40 border-b border-black/10 bg-[#F5E6E0]/90 backdrop-blur-sm">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <Link
-          to="/"
+          to={homeLink}
           className="font-display text-xl font-bold tracking-tight text-[#1A1A1B]"
         >
           Voix de la Beauté

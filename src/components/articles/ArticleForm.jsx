@@ -8,7 +8,7 @@ import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Textarea from '../ui/Textarea'
 import Select from '../ui/Select'
-import ErrorMessage from '../ui/ErrorMessage'
+import Toast from '../ui/Toast'
 
 export default function ArticleForm({ article = null }) {
   const { userProfile } = useAuth()
@@ -23,8 +23,14 @@ export default function ArticleForm({ article = null }) {
     tags: article?.tags?.join(', ') ?? '',
   })
   const [errors, setErrors] = useState({})
-  const [serverError, setServerError] = useState('')
+  const [toast, setToast] = useState(null)
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [toast])
 
   useEffect(() => {
     if (!article && form.title) {
@@ -43,6 +49,7 @@ export default function ArticleForm({ article = null }) {
     if (!form.title.trim()) next.title = 'El título es requerido.'
     if (!form.excerpt.trim()) next.excerpt = 'El resumen es requerido.'
     if (!form.content.trim()) next.content = 'El contenido es requerido.'
+    else if (form.content.trim().length < 100) next.content = 'El contenido debe tener al menos 100 caracteres.'
     if (!form.category) next.category = 'Selecciona una categoría.'
     return next
   }
@@ -81,7 +88,7 @@ export default function ArticleForm({ article = null }) {
 
       navigate('/panel')
     } catch {
-      setServerError('Error al guardar el artículo. Intenta de nuevo.')
+      setToast({ type: 'error', message: 'Error al guardar el artículo. Intenta de nuevo.' })
     } finally {
       setSaving(false)
     }
@@ -91,7 +98,7 @@ export default function ArticleForm({ article = null }) {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
-      <ErrorMessage message={serverError} />
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
       <Input
         id="title"

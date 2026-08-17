@@ -9,6 +9,7 @@ const HomePage = lazy(() => import('../pages/public/HomePage'))
 const ArticleDetailPage = lazy(() => import('../pages/public/ArticleDetailPage'))
 const LoginPage = lazy(() => import('../pages/auth/LoginPage'))
 const RegisterPage = lazy(() => import('../pages/auth/RegisterPage'))
+const AccountSuspendedPage = lazy(() => import('../pages/auth/AccountSuspendedPage'))
 
 const LectorPage = lazy(() => import('../pages/lector/LectorPage'))
 const LectorFavoritosPage = lazy(() => import('../pages/lector/LectorFavoritosPage'))
@@ -58,6 +59,32 @@ function GuestRoute({ children }) {
     )
   }
 
+  if (currentUser && userProfile?.status === 'suspended') {
+    return <Navigate to="/cuenta-suspendida" replace />
+  }
+
+  if (currentUser && userProfile) {
+    return <Navigate to={ROLE_HOME[userProfile.role] ?? '/'} replace />
+  }
+
+  return children
+}
+
+function HomeRoute({ children }) {
+  const { currentUser, userProfile, authLoading } = useAuth()
+
+  if (authLoading || (currentUser && !userProfile)) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#F5E6E0]">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
+
+  if (currentUser && userProfile?.status === 'suspended') {
+    return <Navigate to="/cuenta-suspendida" replace />
+  }
+
   if (currentUser && userProfile) {
     return <Navigate to={ROLE_HOME[userProfile.role] ?? '/'} replace />
   }
@@ -77,10 +104,11 @@ export default function AppRouter() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
           {/* Públicas */}
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomeRoute><HomePage /></HomeRoute>} />
           <Route path="/articulo/:id" element={<ArticleDetailPage />} />
           <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
           <Route path="/registro" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+          <Route path="/cuenta-suspendida" element={<AccountSuspendedPage />} />
 
           {/* Lector y Creador */}
           <Route path="/lector" element={<ProtectedRoute allowedRoles={LECTOR_ROLES}><LectorPage /></ProtectedRoute>} />

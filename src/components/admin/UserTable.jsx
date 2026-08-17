@@ -10,7 +10,7 @@ const ROLE_OPTIONS = [
   { value: 'empresa', label: 'Empresa' },
 ]
 
-export default function UserTable({ users, currentUid, onRoleChange, onDelete }) {
+export default function UserTable({ users, currentUid, onRoleChange, onStatusChange, onDelete }) {
   return (
     <div className="overflow-x-auto rounded-lg border border-black/10 bg-white">
       <table className="w-full text-sm">
@@ -18,6 +18,7 @@ export default function UserTable({ users, currentUid, onRoleChange, onDelete })
           <tr className="border-b border-black/10 bg-neutral-50 text-left">
             <th className="px-4 py-3 font-medium text-neutral-600">Usuario</th>
             <th className="px-4 py-3 font-medium text-neutral-600">Rol</th>
+            <th className="px-4 py-3 font-medium text-neutral-600">Estado</th>
             <th className="px-4 py-3 font-medium text-neutral-600">Registro</th>
             <th className="px-4 py-3 text-right font-medium text-neutral-600">Acciones</th>
           </tr>
@@ -25,6 +26,8 @@ export default function UserTable({ users, currentUid, onRoleChange, onDelete })
         <tbody>
           {users.map((user) => {
             const isSelf = user.uid === currentUid
+            const isSuspended = user.status === 'suspended'
+
             return (
               <tr key={user.uid} className="border-b border-black/5 hover:bg-neutral-50">
                 <td className="px-4 py-3">
@@ -54,9 +57,31 @@ export default function UserTable({ users, currentUid, onRoleChange, onDelete })
                     </select>
                   )}
                 </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`inline-block rounded px-2 py-0.5 text-xs font-medium ${
+                      isSuspended ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-700'
+                    }`}
+                  >
+                    {isSuspended ? 'Suspendido' : 'Activo'}
+                  </span>
+                </td>
                 <td className="px-4 py-3 text-neutral-400">{formatDate(user.createdAt)}</td>
                 <td className="px-4 py-3">
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-2">
+                    {!isSelf && user.role !== ROLES.SUPERADMIN && (
+                      <button
+                        onClick={() => onStatusChange?.(user.uid, isSuspended ? 'active' : 'suspended')}
+                        className={`rounded px-2 py-1 text-xs font-medium ${
+                          isSuspended
+                            ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                            : 'bg-red-50 text-red-600 hover:bg-red-100'
+                        }`}
+                      >
+                        {isSuspended ? 'Habilitar' : 'Suspender'}
+                      </button>
+                    )}
+
                     {!isSelf && user.role !== ROLES.SUPERADMIN && (
                       <button
                         onClick={() => onDelete?.(user)}

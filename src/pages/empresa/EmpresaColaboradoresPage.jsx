@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { UserPlus, UserCheck, UserX } from 'lucide-react'
 import AdminLayout from '../../components/layout/AdminLayout'
 import Avatar from '../../components/ui/Avatar'
@@ -8,7 +8,7 @@ import Input from '../../components/ui/Input'
 import Select from '../../components/ui/Select'
 import Spinner from '../../components/ui/Spinner'
 import EmptyState from '../../components/ui/EmptyState'
-import ErrorMessage from '../../components/ui/ErrorMessage'
+import Toast from '../../components/ui/Toast'
 import Modal from '../../components/ui/Modal'
 import { useAuth } from '../../context/AuthContext'
 import { useColaboradores } from '../../hooks/useColaboradores'
@@ -35,20 +35,37 @@ export default function EmpresaColaboradoresPage() {
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({ displayName: '', email: '', password: '', role: 'lector' })
   const [formErrors, setFormErrors] = useState({})
-  const [serverError, setServerError] = useState('')
+  const [toast, setToast] = useState(null)
   const [creating, setCreating] = useState(false)
   const [userToBlock, setUserToBlock] = useState(null)
   const [blocking, setBlocking] = useState(false)
 
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
   function handleChange(e) {
     const { name, value } = e.target
     setForm((prev) => ({ ...prev, [name]: value }))
-    if (formErrors[name]) setFormErrors((prev) => ({ ...prev, [name]: '' }))
+    if (name === 'email') {
+      if (value && !EMAIL_REGEX.test(value)) {
+        setFormErrors((prev) => ({ ...prev, email: 'Formato de correo inválido.' }))
+      } else {
+        setFormErrors((prev) => ({ ...prev, email: '' }))
+      }
+    } else if (formErrors[name]) {
+      setFormErrors((prev) => ({ ...prev, [name]: '' }))
+    }
   }
 
   function validate() {
     const next = {}
     if (!form.email) next.email = 'El correo es requerido.'
+    else if (!EMAIL_REGEX.test(form.email)) next.email = 'Formato de correo inválido.'
     if (!form.password) next.password = 'La contraseña es requerida.'
     else if (form.password.length < 8) next.password = 'Mínimo 8 caracteres.'
     return next
@@ -60,7 +77,6 @@ export default function EmpresaColaboradoresPage() {
     if (Object.keys(fieldErrors).length) { setFormErrors(fieldErrors); return }
 
     setCreating(true)
-    setServerError('')
     try {
       await createColaborador({
         displayName: form.displayName.trim(),
@@ -72,7 +88,7 @@ export default function EmpresaColaboradoresPage() {
       setForm({ displayName: '', email: '', password: '', role: 'lector' })
       setShowForm(false)
     } catch (err) {
-      setServerError(FIREBASE_ERRORS[err.code] ?? 'Error al crear el colaborador. Intenta de nuevo.')
+      setToast({ type: 'error', message: FIREBASE_ERRORS[err.code] ?? 'Error al crear el colaborador. Intenta de nuevo.' })
     } finally {
       setCreating(false)
     }
@@ -111,7 +127,7 @@ export default function EmpresaColaboradoresPage() {
             Nuevo colaborador
           </h2>
           <form onSubmit={handleCreate} noValidate className="flex flex-col gap-4">
-            <ErrorMessage message={serverError} />
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
