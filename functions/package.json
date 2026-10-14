@@ -1,0 +1,29 @@
+{
+  "name": "voix-de-la-beaute-functions",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API REST (Firebase Cloud Functions + Express) para las evidencias GA7-220501096-AA5 del proyecto Voix de la Beauté",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions,auth,firestore",
+    "deploy": "npm run build && firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^12.3.1",
+    "firebase-functions": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "typescript": "^5.5.4"
+  }
+}

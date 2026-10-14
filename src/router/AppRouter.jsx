@@ -12,6 +12,7 @@ const RegisterPage = lazy(() => import('../pages/auth/RegisterPage'))
 const AccountSuspendedPage = lazy(() => import('../pages/auth/AccountSuspendedPage'))
 
 const LectorPage = lazy(() => import('../pages/lector/LectorPage'))
+const ExplorarPage = lazy(() => import('../pages/lector/ExplorarPage'))
 const LectorFavoritosPage = lazy(() => import('../pages/lector/LectorFavoritosPage'))
 const EscritorioPage = lazy(() => import('../pages/lector/EscritorioPage'))
 
@@ -42,7 +43,7 @@ const SUPERADMIN_ROLES = [ROLES.SUPERADMIN]
 const ROLE_HOME = {
   [ROLES.LECTOR]:     '/lector',
   [ROLES.CREADOR]:    '/lector',
-  [ROLES.AUTHOR]:     '/panel',
+  [ROLES.AUTHOR]:     '/lector',
   [ROLES.EMPRESA]:    '/empresa',
   [ROLES.ADMIN]:      '/admin',
   [ROLES.SUPERADMIN]: '/superadmin',
@@ -111,6 +112,7 @@ export default function AppRouter() {
           <Route path="/cuenta-suspendida" element={<AccountSuspendedPage />} />
 
           {/* Lector y Creador */}
+          <Route path="/explorar" element={<ProtectedRoute allowedRoles={LECTOR_ROLES}><ExplorarPage /></ProtectedRoute>} />
           <Route path="/lector" element={<ProtectedRoute allowedRoles={LECTOR_ROLES}><LectorPage /></ProtectedRoute>} />
           <Route path="/lector/favoritos" element={<ProtectedRoute allowedRoles={LECTOR_ROLES}><LectorFavoritosPage /></ProtectedRoute>} />
           <Route path="/escritorio" element={<ProtectedRoute allowedRoles={LECTOR_ROLES}><EscritorioPage /></ProtectedRoute>} />

@@ -1,0 +1,33 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isUnder5MB() {
+      return request.resource.size < 5 * 1024 * 1024;
+    }
+
+    // Foto de perfil: solo el propio usuario puede escribir la suya
+    match /users/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated()
+                   && request.auth.uid == userId
+                   && isImage()
+                   && isUnder5MB();
+    }
+
+    // Portada de artículo: cualquier usuario autenticado puede subir
+    // (la propiedad del artículo ya se valida en la API antes de guardar la URL)
+    match /articles/{articleId}/{fileName} {
+      allow read: if true;
+      allow write: if isAuthenticated() && isImage() && isUnder5MB();
+    }
+  }
+}

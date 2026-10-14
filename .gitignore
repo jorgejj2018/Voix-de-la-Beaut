@@ -6,3 +6,8 @@ dist
 *.log
 .DS_Store
 .vscode
+AGENTS.md
+functions/README.md
+.github/
+playwright-report/
+test-results/

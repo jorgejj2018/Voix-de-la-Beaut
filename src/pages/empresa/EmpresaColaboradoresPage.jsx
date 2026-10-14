@@ -99,9 +99,19 @@ export default function EmpresaColaboradoresPage() {
     setBlocking(true)
     try {
       await setUserStatus(userToBlock.uid, 'blocked')
+    } catch (err) {
+      setToast({ type: 'error', message: err.message ?? 'No se pudo bloquear al colaborador.' })
     } finally {
       setBlocking(false)
       setUserToBlock(null)
+    }
+  }
+
+  async function handleUnblock(uid) {
+    try {
+      await setUserStatus(uid, 'active')
+    } catch (err) {
+      setToast({ type: 'error', message: err.message ?? 'No se pudo activar al colaborador.' })
     }
   }
 
@@ -227,7 +237,7 @@ export default function EmpresaColaboradoresPage() {
                       <div className="flex justify-end">
                         {isBlocked ? (
                           <button
-                            onClick={() => setUserStatus(user.uid, 'active')}
+                            onClick={() => handleUnblock(user.uid)}
                             className="flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-50"
                           >
                             <UserCheck size={13} /> Activar

@@ -1,19 +1,14 @@
 import {
   collection,
   doc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
   getDocs,
   getDoc,
-  serverTimestamp,
 } from 'firebase/firestore'
 import { db } from './firebase'
-import { slugify } from '../utils/slugify'
-import { calculateReadTime } from '../utils/readTime'
+import { apiFetch } from './apiClient'
 
 const COLLECTION = 'articles'
 
@@ -48,41 +43,34 @@ export async function getArticleBySlug(slug) {
   return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() }
 }
 
-export async function createArticle(data, authorProfile) {
-  const slug = slugify(data.title)
-  const readTime = calculateReadTime(data.content)
-
-  return addDoc(collection(db, COLLECTION), {
-    ...data,
-    slug,
-    readTime,
-    status: 'draft',
-    authorId: authorProfile.uid,
-    authorName: authorProfile.displayName,
-    authorPhotoURL: authorProfile.photoURL ?? null,
-    featured: false,
-    coverImage: null,
-    publishedAt: null,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+export async function createArticle(data) {
+  const { article } = await apiFetch('/articles', {
+    method: 'POST',
+    auth: true,
+    body: data,
   })
+  return article
 }
 
 export async function updateArticle(id, data) {
-  const updates = { ...data, updatedAt: serverTimestamp() }
-  if (data.title) updates.slug = slugify(data.title)
-  if (data.content) updates.readTime = calculateReadTime(data.content)
-  return updateDoc(doc(db, COLLECTION, id), updates)
+  return apiFetch(`/articles/${id}`, {
+    method: 'PUT',
+    auth: true,
+    body: data,
+  })
 }
 
 export async function updateArticleStatus(id, status) {
-  return updateDoc(doc(db, COLLECTION, id), {
-    status,
-    publishedAt: status === 'published' ? serverTimestamp() : null,
-    updatedAt: serverTimestamp(),
+  return apiFetch(`/articles/${id}/status`, {
+    method: 'PATCH',
+    auth: true,
+    body: { status },
   })
 }
 
 export async function deleteArticle(id) {
-  return deleteDoc(doc(db, COLLECTION, id))
+  return apiFetch(`/articles/${id}`, {
+    method: 'DELETE',
+    auth: true,
+  })
 }

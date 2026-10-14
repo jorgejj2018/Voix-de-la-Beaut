@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { createArticle, updateArticle } from '../../services/articlesService'
+import { useStorage } from '../../hooks/useStorage'
 import { slugify } from '../../utils/slugify'
 import { CATEGORIES } from '../../constants/categories'
 import Button from '../ui/Button'
@@ -13,6 +14,7 @@ import Toast from '../ui/Toast'
 export default function ArticleForm({ article = null }) {
   const { userProfile } = useAuth()
   const navigate = useNavigate()
+  const { uploadImage, uploading } = useStorage()
 
   const [form, setForm] = useState({
     title: article?.title ?? '',
@@ -22,6 +24,8 @@ export default function ArticleForm({ article = null }) {
     category: article?.category ?? '',
     tags: article?.tags?.join(', ') ?? '',
   })
+  const [coverFile, setCoverFile] = useState(null)
+  const [coverPreview, setCoverPreview] = useState(article?.coverImage ?? null)
   const [errors, setErrors] = useState({})
   const [toast, setToast] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -44,6 +48,12 @@ export default function ArticleForm({ article = null }) {
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }))
   }
 
+  function handleCoverChange(e) {
+    const file = e.target.files?.[0] ?? null
+    setCoverFile(file)
+    if (file) setCoverPreview(URL.createObjectURL(file))
+  }
+
   function validate() {
     const next = {}
     if (!form.title.trim()) next.title = 'El título es requerido.'
@@ -63,7 +73,6 @@ export default function ArticleForm({ article = null }) {
     }
 
     setSaving(true)
-    setServerError('')
 
     try {
       const tags = form.tags
@@ -81,9 +90,17 @@ export default function ArticleForm({ article = null }) {
       }
 
       if (article) {
+        if (coverFile) {
+          const url = await uploadImage('cover', article.id, coverFile)
+          if (url) data.coverImage = url
+        }
         await updateArticle(article.id, data)
       } else {
-        await createArticle(data, userProfile)
+        const created = await createArticle(data)
+        if (coverFile && created?.id) {
+          const url = await uploadImage('cover', created.id, coverFile)
+          if (url) await updateArticle(created.id, { coverImage: url })
+        }
       }
 
       navigate('/panel')
@@ -94,11 +111,32 @@ export default function ArticleForm({ article = null }) {
     }
   }
 
-  const isLoading = saving
+  const isLoading = saving || uploading
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-6">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      <div>
+        <label htmlFor="coverImage" className="mb-1 block text-sm font-medium text-[#1A1A1B]">
+          Imagen de portada
+        </label>
+        {coverPreview && (
+          <img
+            src={coverPreview}
+            alt="Vista previa de portada"
+            className="mb-3 h-40 w-full rounded-lg object-cover"
+          />
+        )}
+        <input
+          id="coverImage"
+          name="coverImage"
+          type="file"
+          accept="image/*"
+          onChange={handleCoverChange}
+          className="block w-full text-sm text-neutral-600"
+        />
+      </div>
 
       <Input
         id="title"

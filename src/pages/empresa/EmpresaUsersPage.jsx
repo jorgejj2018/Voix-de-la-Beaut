@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { UserCheck, UserX } from 'lucide-react'
 import AdminLayout from '../../components/layout/AdminLayout'
 import Avatar from '../../components/ui/Avatar'
@@ -6,6 +6,7 @@ import Badge from '../../components/ui/Badge'
 import Spinner from '../../components/ui/Spinner'
 import EmptyState from '../../components/ui/EmptyState'
 import Modal from '../../components/ui/Modal'
+import Toast from '../../components/ui/Toast'
 import { useUsers } from '../../hooks/useUsers'
 import { setUserStatus } from '../../services/usersService'
 import { formatDate } from '../../utils/formatDate'
@@ -14,6 +15,13 @@ export default function EmpresaUsersPage() {
   const { users, loading } = useUsers()
   const [userToBlock, setUserToBlock] = useState(null)
   const [blocking, setBlocking] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [toast])
 
   const miembros = users.filter((u) => u.role === 'lector' || u.role === 'creador')
 
@@ -22,6 +30,8 @@ export default function EmpresaUsersPage() {
     setBlocking(true)
     try {
       await setUserStatus(userToBlock.uid, 'blocked')
+    } catch (err) {
+      setToast({ type: 'error', message: err.message ?? 'No se pudo bloquear al usuario.' })
     } finally {
       setBlocking(false)
       setUserToBlock(null)
@@ -29,11 +39,17 @@ export default function EmpresaUsersPage() {
   }
 
   async function handleUnblock(uid) {
-    await setUserStatus(uid, 'active')
+    try {
+      await setUserStatus(uid, 'active')
+    } catch (err) {
+      setToast({ type: 'error', message: err.message ?? 'No se pudo activar al usuario.' })
+    }
   }
 
   return (
     <AdminLayout>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
       <h1 className="mb-8 font-display text-2xl font-bold text-[#1A1A1B]">
         Usuarios de la empresa
       </h1>

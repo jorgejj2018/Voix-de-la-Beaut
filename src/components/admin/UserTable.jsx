@@ -8,6 +8,7 @@ const ROLE_OPTIONS = [
   { value: 'lector', label: 'Lector' },
   { value: 'creador', label: 'Creador' },
   { value: 'empresa', label: 'Empresa' },
+  { value: 'admin', label: 'Admin' },
 ]
 
 export default function UserTable({ users, currentUid, onRoleChange, onStatusChange, onDelete }) {

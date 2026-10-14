@@ -11,7 +11,7 @@ const PANEL_LINKS = {
 const ROLE_HOME = {
   lector: '/lector',
   creador: '/lector',
-  author: '/panel',
+  author: '/lector',
   empresa: '/empresa',
   admin: '/admin',
   superadmin: '/superadmin',

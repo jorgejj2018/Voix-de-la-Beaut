@@ -1,15 +1,6 @@
-import {
-  collection,
-  doc,
-  updateDoc,
-  query,
-  orderBy,
-  where,
-  getDocs,
-  writeBatch,
-  serverTimestamp,
-} from 'firebase/firestore'
+import { collection, query, orderBy } from 'firebase/firestore'
 import { db } from './firebase'
+import { apiFetch } from './apiClient'
 
 const COLLECTION = 'users'
 
@@ -18,35 +9,24 @@ export function getAllUsersQuery() {
 }
 
 export async function updateUserRole(uid, role) {
-  return updateDoc(doc(db, COLLECTION, uid), {
-    role,
-    updatedAt: serverTimestamp(),
+  return apiFetch(`/users/${uid}/role`, {
+    method: 'PATCH',
+    auth: true,
+    body: { role },
   })
 }
 
 export async function setUserStatus(uid, status) {
-  return updateDoc(doc(db, COLLECTION, uid), {
-    status,
-    updatedAt: serverTimestamp(),
+  return apiFetch(`/users/${uid}/status`, {
+    method: 'PATCH',
+    auth: true,
+    body: { status },
   })
-}
-
-async function archiveUserArticles(uid) {
-  const q = query(collection(db, 'articles'), where('authorId', '==', uid))
-  const snapshot = await getDocs(q)
-  if (snapshot.empty) return
-
-  const batch = writeBatch(db)
-  snapshot.docs.forEach((articleDoc) => {
-    batch.update(articleDoc.ref, { status: 'archived', updatedAt: serverTimestamp() })
-  })
-  return batch.commit()
 }
 
 export async function deleteUser(uid) {
-  await archiveUserArticles(uid)
-  return updateDoc(doc(db, COLLECTION, uid), {
-    deleted: true,
-    updatedAt: serverTimestamp(),
+  return apiFetch(`/users/${uid}`, {
+    method: 'DELETE',
+    auth: true,
   })
 }

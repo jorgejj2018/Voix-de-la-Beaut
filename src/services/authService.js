@@ -1,5 +1,4 @@
 import {
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   GoogleAuthProvider,
@@ -10,6 +9,7 @@ import {
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from './firebase'
 import { ROLES } from '../constants/roles'
+import { apiFetch } from './apiClient'
 
 const googleProvider = new GoogleAuthProvider()
 
@@ -20,32 +20,21 @@ function resolveRole(email) {
 }
 
 export async function register(displayName, email, password, accountType = 'independiente', companyName = null) {
-  await setPersistence(auth, browserLocalPersistence)
-  const { user } = await createUserWithEmailAndPassword(auth, email, password)
-
-  let role = ROLES.LECTOR
-  if (email?.toLowerCase() === SUPERADMIN_EMAIL) {
-    role = ROLES.SUPERADMIN
-  } else if (accountType === 'empresa') {
-    role = ROLES.EMPRESA
-  }
-
-  await setDoc(doc(db, 'users', user.uid), {
-    uid: user.uid,
-    displayName,
-    email,
-    photoURL: null,
-    role,
-    companyName: role === ROLES.EMPRESA ? (companyName || displayName) : null,
-    companyId: null,
-    status: 'active',
-    bio: null,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
+  await apiFetch('/auth/register', {
+    method: 'POST',
+    body: { displayName, email, password, accountType, companyName },
   })
+
+  await setPersistence(auth, browserLocalPersistence)
+  return signInWithEmailAndPassword(auth, email, password)
 }
 
 export async function login(email, password) {
+  await apiFetch('/auth/login', {
+    method: 'POST',
+    body: { email, password },
+  })
+
   await setPersistence(auth, browserLocalPersistence)
   return signInWithEmailAndPassword(auth, email, password)
 }

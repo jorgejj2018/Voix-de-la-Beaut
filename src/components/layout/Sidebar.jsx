@@ -1,21 +1,27 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, FileText, Users, User, LogOut, BookOpen, Building2, MonitorPlay, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, FileText, Users, User, LogOut, BookOpen, Building2, MonitorPlay, BarChart2, Compass } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
 const NAV_BY_ROLE = {
   lector: [
+    { to: '/explorar', icon: Compass, label: 'Explorar' },
     { to: '/lector', icon: BookOpen, label: 'Mi feed' },
     { to: '/escritorio', icon: MonitorPlay, label: 'Escritorio' },
   ],
   creador: [
+    { to: '/explorar', icon: Compass, label: 'Explorar' },
     { to: '/lector', icon: BookOpen, label: 'Mi feed' },
     { to: '/escritorio', icon: MonitorPlay, label: 'Escritorio' },
     { to: '/panel', icon: FileText, label: 'Mis artículos' },
     { to: '/analiticas', icon: BarChart2, label: 'Analíticas' },
   ],
   author: [
+    { to: '/explorar', icon: Compass, label: 'Explorar' },
+    { to: '/lector', icon: BookOpen, label: 'Mi feed' },
+    { to: '/escritorio', icon: MonitorPlay, label: 'Escritorio' },
     { to: '/panel', icon: FileText, label: 'Mis artículos' },
+    { to: '/analiticas', icon: BarChart2, label: 'Analíticas' },
   ],
   empresa: [
     { to: '/empresa', icon: Building2, label: 'Dashboard' },
@@ -37,7 +43,7 @@ const NAV_BY_ROLE = {
 const ROLE_HOME = {
   lector: '/lector',
   creador: '/lector',
-  author: '/panel',
+  author: '/lector',
   empresa: '/empresa',
   admin: '/admin',
   superadmin: '/superadmin',

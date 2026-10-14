@@ -5,7 +5,7 @@ import Spinner from '../components/ui/Spinner'
 const ROLE_HOME = {
   lector:     '/lector',
   creador:    '/lector',
-  author:     '/panel',
+  author:     '/lector',
   empresa:    '/empresa',
   admin:      '/admin',
   superadmin: '/superadmin',

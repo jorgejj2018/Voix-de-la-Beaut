@@ -1,0 +1,314 @@
+{
+  "info": {
+    "name": "Voix de la Beauté - API (EV01-EV04)",
+    "description": "Colección para las evidencias GA7-220501096-AA5. Carpeta 'Auth (EV01-EV02)' cubre el caso de estudio de registro/login. Carpeta 'Proyecto Voix (EV03-EV04)' cubre Usuarios/Roles y CRUD de Artículos contra la base real 'voix'.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:5001/voix-d135a/us-central1/api" },
+    { "key": "idToken", "value": "" },
+    { "key": "uid", "value": "" },
+    { "key": "userId", "value": "PEGA_AQUI_UN_UID_DE_FIRESTORE" },
+    { "key": "articleId", "value": "PEGA_AQUI_UN_ARTICLE_ID" }
+  ],
+  "item": [
+    {
+      "name": "Auth (EV01-EV02)",
+      "item": [
+        {
+          "name": "Registrar usuario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"displayName\": \"Usuario Prueba\",\n  \"email\": \"prueba@voix.com\",\n  \"password\": \"Prueba1234\",\n  \"accountType\": \"independiente\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const data = pm.response.json();",
+                  "  if (data.profile && data.profile.uid) {",
+                  "    pm.collectionVariables.set('uid', data.profile.uid);",
+                  "    pm.collectionVariables.set('userId', data.profile.uid);",
+                  "  }",
+                  "}",
+                  "pm.test('Status 201 o error controlado', function () {",
+                  "  pm.expect([201, 400, 409]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"prueba@voix.com\",\n  \"password\": \"Prueba1234\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.collectionVariables.set('idToken', data.idToken);",
+                  "  pm.collectionVariables.set('uid', data.uid);",
+                  "}",
+                  "pm.test('Login responde 200 o 401 controlado', function () {",
+                  "  pm.expect([200, 401, 403]).to.include(pm.response.code);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login - credenciales inválidas (caso de error)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"prueba@voix.com\",\n  \"password\": \"contraseñaIncorrecta\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Debe responder 401', function () {",
+                  "  pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Proyecto Voix (EV03-EV04)",
+      "item": [
+        {
+          "name": "Usuarios",
+          "item": [
+            {
+              "name": "Listar usuarios (admin/superadmin)",
+              "request": {
+                "method": "GET",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{idToken}}" }] },
+                "url": { "raw": "{{base_url}}/users", "host": ["{{base_url}}"], "path": ["users"] }
+              }
+            },
+            {
+              "name": "Cambiar rol de usuario (superadmin)",
+              "request": {
+                "method": "PATCH",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{idToken}}" }] },
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"role\": \"creador\"\n}" },
+                "url": {
+                  "raw": "{{base_url}}/users/{{userId}}/role",
+                  "host": ["{{base_url}}"],
+                  "path": ["users", "{{userId}}", "role"]
+                }
+              }
+            },
+            {
+              "name": "Suspender/activar usuario",
+              "request": {
+                "method": "PATCH",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{idToken}}" }] },
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"status\": \"suspended\"\n}" },
+                "url": {
+                  "raw": "{{base_url}}/users/{{userId}}/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["users", "{{userId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Eliminar usuario",
+              "request": {
+                "method": "DELETE",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{idToken}}" }] },
+                "url": {
+                  "raw": "{{base_url}}/users/{{userId}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["users", "{{userId}}"]
+                }
+              }
+            },
+            {
+              "name": "Caso de error - sin token (401 esperado)",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{base_url}}/users", "host": ["{{base_url}}"], "path": ["users"] }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Debe responder 401 sin token', function () {",
+                      "  pm.response.to.have.status(401);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Artículos",
+          "item": [
+            {
+              "name": "Listar artículos",
+              "request": {
+                "method": "GET",
+                "url": { "raw": "{{base_url}}/articles", "host": ["{{base_url}}"], "path": ["articles"] }
+              }
+            },
+            {
+              "name": "Listar artículos publicados",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/articles?status=published",
+                  "host": ["{{base_url}}"],
+                  "path": ["articles"],
+                  "query": [{ "key": "status", "value": "published" }]
+                }
+              }
+            },
+            {
+              "name": "Obtener artículo por id",
+              "request": {
+                "method": "GET",
+                "url": {
+                  "raw": "{{base_url}}/articles/{{articleId}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["articles", "{{articleId}}"]
+                }
+              }
+            },
+            {
+              "name": "Crear artículo (creador/author/admin)",
+              "request": {
+                "method": "POST",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{idToken}}" }] },
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Artículo de prueba Postman\",\n  \"excerpt\": \"Resumen de prueba\",\n  \"content\": \"Contenido de prueba generado desde Postman para las evidencias EV03/EV04. Este texto debe superar los cien caracteres para pasar la validación del formulario original de la app.\",\n  \"category\": \"tendencias\"\n}"
+                },
+                "url": { "raw": "{{base_url}}/articles", "host": ["{{base_url}}"], "path": ["articles"] }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "  const data = pm.response.json();",
+                      "  if (data.article && data.article.id) {",
+                      "    pm.collectionVariables.set('articleId', data.article.id);",
+                      "  }",
+                      "}"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Editar artículo",
+              "request": {
+                "method": "PUT",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{idToken}}" }] },
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Artículo de prueba Postman (editado)\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/articles/{{articleId}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["articles", "{{articleId}}"]
+                }
+              }
+            },
+            {
+              "name": "Publicar/despublicar artículo",
+              "request": {
+                "method": "PATCH",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{idToken}}" }] },
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"status\": \"published\"\n}" },
+                "url": {
+                  "raw": "{{base_url}}/articles/{{articleId}}/status",
+                  "host": ["{{base_url}}"],
+                  "path": ["articles", "{{articleId}}", "status"]
+                }
+              }
+            },
+            {
+              "name": "Eliminar artículo",
+              "request": {
+                "method": "DELETE",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{idToken}}" }] },
+                "url": {
+                  "raw": "{{base_url}}/articles/{{articleId}}",
+                  "host": ["{{base_url}}"],
+                  "path": ["articles", "{{articleId}}"]
+                }
+              }
+            },
+            {
+              "name": "Caso de error - editar artículo de otro autor (403 esperado)",
+              "request": {
+                "method": "PUT",
+                "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{idToken}}" }] },
+                "header": [{ "key": "Content-Type", "value": "application/json" }],
+                "body": { "mode": "raw", "raw": "{\n  \"title\": \"Intento no autorizado\"\n}" },
+                "url": {
+                  "raw": "{{base_url}}/articles/ID_DE_UN_ARTICULO_AJENO",
+                  "host": ["{{base_url}}"],
+                  "path": ["articles", "ID_DE_UN_ARTICULO_AJENO"]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Debe responder 403 (no eres el autor) o 404', function () {",
+                      "  pm.expect([403, 404]).to.include(pm.response.code);",
+                      "});"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
